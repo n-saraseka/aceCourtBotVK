@@ -1,0 +1,8 @@
+#why does this exist anyway
+__pycache__
+
+#yea there were some dlls
+*.dll
+
+#big no no
+tokens.py
