@@ -30,8 +30,7 @@ for event in longpoll.listen():
             id = event.chat_id
             msg = event.object.message
             if list(msg.keys()).count('action')>0 and msg['action']['type']=='chat_invite_user':
-                sender(id, 'Добрый день, господа юристы! Я - бот, создающий сцены в стиле Ace Attorney.\nПерешлите мне переписку с командой "@aceCourtBotVK суд" и я создам с ней видео.\nПо умолчанию видео приватные, но если вы хотите, чтобы видео было опубликовано и вы могли им поделиться, припишите "public" к вашему запросу о создании видео.\nО всех проблемах, связанных с работой бота, обращайтесь в группу: vk.com/aceCourtBotVK или к создателю vk.com/saraseka.\n')
-                sender(id, 'Помощь по всем команда можно получить по команде "@aceCourtBotVK помощь".')
+                sender(id, 'Добрый день, господа юристы! Я - бот, создающий сцены в стиле Ace Attorney.\nПерешлите мне переписку с командой "@aceCourtBotVK суд" и я создам с ней видео.\nПомощь по всем командам можно получить по команде "@aceCourtBotVK помощь".\nО всех проблемах, связанных с работой бота, обращайтесь в группу: vk.com/aceCourtBotVK или к создателю vk.com/saraseka.\n')
             if msg['text'].startswith('[club204496105'):
                 if 'суд' in msg['text']:
                     if len(msg['fwd_messages'])>0:
