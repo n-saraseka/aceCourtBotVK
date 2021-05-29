@@ -141,6 +141,9 @@ for event in longpoll.listen():
                                 attorney_name = f"сообщества {group_name_get(attorney)}"
                             if len(unique_ids)>1:
                                 prosecutor = unique_ids[messages_counter.index(sorted_counter[1])]
+                                if attorney == prosecutor:
+                                    matching_values = [i for i, x in enumerate(messages_counter) if x == sorted_counter[0]]
+                                    prosecutor = unique_ids[matching_values[1]]
                                 if (prosecutor*(-1))<0:
                                     prosecutor_name = user_get(prosecutor, name_case='gen')
                                     prosecutor_name = f"{prosecutor_name['first_name']} {prosecutor_name['last_name']}"
