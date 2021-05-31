@@ -14,7 +14,7 @@ vk_user_session = vk_api.VkApi(token = user_token)
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 def bot_render(msg, id, video_name):
-    request = msg['text']
+    request = msg['text'].lower()
     sender_id = msg['from_id']
     sender_guy = user_get(sender_id)
     sender_name = sender_guy['first_name']

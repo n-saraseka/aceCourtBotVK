@@ -26,7 +26,7 @@ def worker(queue):
         if list(msg.keys()).count('action')>0 and msg['action']['type']=='chat_invite_user':
             sender(id, 'Добрый день, господа юристы! Я — бот, создающий сцены в стиле Ace Attorney.\nПерешлите мне переписку с командой "@aceCourtBotVK суд" и я создам с ней видео.\nПомощь по всем командам можно получить по команде "@aceCourtBotVK помощь".\nО всех проблемах, связанных с работой бота, обращайтесь в группу: vk.com/aceCourtBotVK или к создателю vk.com/saraseka.')
         elif msg['text'].startswith('[club204496105'):
-                if 'суд' in msg['text']:
+                if 'суд' in msg['text'].lower():
                     messages = vk_session.method('messages.getByConversationMessageId', {'peer_id': msg['peer_id'], 'conversation_message_ids': msg['conversation_message_id'], 'extended': 1})
                     messages = messages['items'][0]['fwd_messages']
                     if len(messages)>0 and len(messages)<=100:
@@ -36,7 +36,7 @@ def worker(queue):
                         sender(id, 'Вы переслали слишком много сообщений. Пожалуйста, уменьшите количество сообщений и перешлите их ещё раз.')
                     else:
                         sender(id, 'В самом деле, Вы удивили судью, не переслав ни одного сообщения!\nДанный бот принимает только пересланные сообщения; ответы не работают. Если Вы попытались запросить видео ответом на сообщение, то попробуйте его переслать.\nВ ином случае, по всей видимости, Вам захотелось подразнить судью. Не отвлекайте его от работы!')
-                elif 'помощь' in msg['text']:
+                elif 'помощь' in msg['text'].lower():
                     sender(id, "Команды:\nсуд — создание видео. \n-p — видео будет публичным и Вы сможете его сохранить себе.\n-ig — выбор персонажей с игнорированием пола пользователей.\n-m — выбор OST'а по коду. Коды для -m:\nPWR - Phoenix Wright: Ace Attorney\nJFA - Ace Attorney: Justice For All\nT&T - Ace Attorney: Trials and Tribulations\nAJ - Apollo Justice: Ace Attorney\nRND - случайное аудио, стоит по умолчанию.")
 
 if __name__=='__main__':
