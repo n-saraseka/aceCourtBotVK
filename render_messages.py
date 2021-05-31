@@ -98,13 +98,13 @@ def bot_render(msg, id, video_name):
         comments.append(Comment(received_id, full_name, text, ev_path, gender=gender))
         ev_path = None
     if '-m' in request:
-        if 'PWR' in request:
+        if 'pwr' in request:
             ost_code = 'PWR'
-        elif 'JFA' in request:
+        elif 'jfa' in request:
             ost_code = 'JFA'
-        elif 'T&T' in request:
+        elif 't&t' in request:
             ost_code = 'T&T'
-        elif 'AJ' in request:
+        elif 'aj' in request:
             ost_code = 'AJ'
         else:
             ost_code = 'RND'

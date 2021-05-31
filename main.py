@@ -41,12 +41,11 @@ def worker(queue):
 
 if __name__=='__main__':
     task_queue = Queue()
-    worker_1 = Process(target=worker, args=((task_queue),))
-    worker_1.start()
-    worker_2 = Process(target=worker, args=((task_queue),))
-    worker_2.start()
-    worker_3 = Process(target=worker, args=((task_queue),))
-    worker_3.start()
+    workers = []
+    workers_amount = 3
+    for i in range(workers_amount):
+        workers.append(Process(target=worker, args=((task_queue),)))
+        workers[i].start()
     for event in longpoll.listen():
         if event.type == VkBotEventType.MESSAGE_NEW:
             if event.from_chat:
