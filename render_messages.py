@@ -13,12 +13,12 @@ vk_session = vk_api.VkApi(token = group_token)
 vk_user_session = vk_api.VkApi(token = user_token)
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
-def bot_render(msg, id):
+def bot_render(msg, id, video_name):
     request = msg['text']
-    sender(id, 'Заседание началось. По окончании суда вам будет отправлена его запись.')
     sender_id = msg['from_id']
     sender_guy = user_get(sender_id)
     sender_name = sender_guy['first_name']
+    sender(id, f"[id{sender_id}|{sender_name}], Ваши сообщения обрабатываются. По завершении заседания Вам будет отправлена его запись.")
     msg = vk_session.method('messages.getByConversationMessageId', {'peer_id': msg['peer_id'], 'conversation_message_ids': msg['conversation_message_id'], 'extended': 1})
     messages = msg['items'][0]['fwd_messages']
     photo_ev_detected = False
@@ -71,8 +71,8 @@ def bot_render(msg, id):
                     text+=f"\n[Запись {wall_name}]"
             elif pic['type'] in ['video', 'photo', 'doc', 'sticker']:
                 if photo_ev_detected == False:
-                    os.mkdir('evidence')
-                    evidence_dir = os.path.join(current_dir, 'evidence')
+                    os.mkdir(f'evidence-{video_name}')
+                    evidence_dir = os.path.join(current_dir, f'evidence-{video_name}')
                     photo_ev_detected = True
                 if pic['type']=='video':
                     vid_keys = list(pic['video'].keys())
@@ -110,9 +110,9 @@ def bot_render(msg, id):
             ost_code = 'RND'
     else:
         ost_code = 'RND'
-    render_comment_list(comments, output_filename = 'video.mp4', music_code=ost_code)
+    render_comment_list(comments, output_filename = video_name, music_code=ost_code)
     if photo_ev_detected:
-        shutil.rmtree('evidence')
+        shutil.rmtree(f'evidence-{video_name}')
     sorted_counter = sorted(messages_counter, reverse=True)
     attorney = unique_ids[messages_counter.index(sorted_counter[0])]
     if (attorney*(-1))<0:
@@ -135,8 +135,8 @@ def bot_render(msg, id):
         a = vk_user_session.method('video.save', {'name': f"Спор {attorney_name} и {prosecutor_name}", 'description': 'Созданно ботом @aceCourtBotVK.', 'is_private': private, 'group_id': group_id, 'no_comments': 0, 'compression': 0})
     else:
         a = vk_user_session.method('video.save', {'name': f"Монолог {attorney_name}", 'description': 'Созданно ботом @aceCourtBotVK.', 'is_private': private, 'group_id': group_id, 'no_comments': 0, 'compression': 0})
-    with open('video.mp4', 'rb') as f:
+    with open(f'{video_name}.mp4', 'rb') as f:
         video = requests.post(a['upload_url'], files={'video_file': f})
     video = f"video-{group_id}_{a['video_id']}"
     vk_session.method('messages.send', {'chat_id': id, 'message': f"[id{sender_id}|{sender_name}], видео готово.", 'attachment': video, 'random_id': 0})
-    os.remove('video.mp4')
+    os.remove(f'{video_name}.mp4')
