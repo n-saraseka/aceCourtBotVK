@@ -1,5 +1,5 @@
 import os, vk_api
-from tokens import group_token, user_token, group_id
+from tokens import group_token, user_token
 from peewee import *
 
 vk_session = vk_api.VkApi(token = group_token)

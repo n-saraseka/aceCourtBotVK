@@ -7,11 +7,8 @@ import requests
 import random
 from tokens import group_token, user_token, group_id
 from vk_methods import sender, user_get, group_name_get
-from api_and_stuff import vk_session, vk_user_session, current_dir, Chat, db
-from PIL import Image, ImageDraw, ImageFont
-from nudenet import NudeClassifier
+from api_and_stuff import vk_session, vk_user_session, current_dir, db
 from peewee import *
-import json
 
 vk_session = vk_api.VkApi(token = group_token)
 vk_user_session = vk_api.VkApi(token = user_token)

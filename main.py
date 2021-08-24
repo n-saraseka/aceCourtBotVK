@@ -1,13 +1,8 @@
 import vk_api
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 from typing import List
-import objection_engine
-import os, shutil
+import os
 import base64
-import requests
-import random
-import signal
-import json
 from tokens import group_token, user_token, group_id
 from vk_methods import sender, user_get, group_name_get
 from api_and_stuff import vk_session, vk_user_session, current_dir, Chat, db
@@ -15,8 +10,6 @@ from render_messages import bot_render
 from multiprocessing import Process, Queue
 from peewee import *
 import logging
-import atexit
-import time
 
 longpoll = VkBotLongPoll(vk_session, group_id)
 logging.basicConfig(filename='info.log', format='%(asctime)s - %(message)s', level=logging.INFO)
