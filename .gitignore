@@ -1,8 +1,5 @@
 #why does this exist anyway
-__pycache__
-
-#yea there were some dlls
-*.dll
+__pycache__ 
 
 #big no no
 tokens.py
