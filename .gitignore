@@ -1,5 +1,7 @@
 #why does this exist anyway
 __pycache__ 
 
+*.dll
+
 #big no no
 tokens.py
