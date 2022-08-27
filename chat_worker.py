@@ -1,6 +1,6 @@
 from api_and_stuff import vk_session, vk_user_session, current_dir, Chat
 from vk_api import ApiError
-from vk_methods import sender
+from vk_methods import sender, user_get
 from render_messages import bot_render
 import shutil
 import os
@@ -53,6 +53,14 @@ def chat_worker(id, msg, from_chat):
                         os.remove(f'{name}.mp4.txt')
                     if os.path.exists(name):
                         shutil.rmtree(name)
+                except Exception as e:
+                    sender(id, f'Бот не смог обработать видео! Текст сообщения:\n{e}\nПерешлите данное сообщение в сообщения группы или создателю бота, чтобы он смог решить проблему.', from_chat)
+            else:
+                sender_id = msg['from_id']
+                sender_guy = user_get(sender_id)
+                sender_name = sender_guy['first_name']
+                sender(id, f'[id{sender_id}|{sender_name}], похоже, что Вы написали "суд" без пересланного сообщения. Перешлите что-нибудь вместе с командой "суд" и попробуйте ещё раз.', from_chat)
+
         elif 'помощь' in msg['text'].lower().split():
             try:
                 if '-m' in msg['text'].lower().split():

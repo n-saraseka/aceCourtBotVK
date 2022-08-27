@@ -25,12 +25,15 @@ def user_worker(id, msg, from_chat):
                 messages = []
         else:
             messages = messages['items'][0]['fwd_messages']
-        if len(messages)>0 and len(messages)<=100:
+        if len(messages)>0:
             logging.info(f'Video is being rendered. CHAT_ID: {id}')
             name = base64.b64encode(os.urandom(16)).decode('ascii').replace('/', '').replace('=', '').replace('+', '')
-            bot_render(msg, id, name, from_chat)
-        elif len(messages)>100:
-            sender(id, 'Вы переслали слишком много сообщений. Пожалуйста, уменьшите количество сообщений и перешлите их ещё раз.', from_chat)
+            try:
+                bot_render(msg, id, name, from_chat)
+            except Exception as e:
+                    sender(id, f'Бот не смог обработать видео! Текст сообщения:\n{e}\nПерешлите данное сообщение в сообщения группы или создателю бота, чтобы он смог решить проблему.', from_chat)
+        else:
+            sender(id, f'Похоже, что Вы написали "суд" без пересланного сообщения. Перешлите что-нибудь вместе с командой "суд" и попробуйте ещё раз.', from_chat)
     elif 'помощь' in msg['text'].lower().split():
         if '-m' in msg['text'].lower().split():
             sender(id, "PWR — Phoenix Wright: Ace Attorney\nJFA — Phoenix Wright: Ace Attorney — Justice For All\nT&T — Phoenix Wright: Ace Attorney — Trials and Tribulations\nAAI — Ace Attorney Investigations: Miles Edgeworth\nAAI2 — Ace Attorney Investigations: Miles Edgeworth 2\nAJ — Apollo Justice: Ace Attorney\nDD — Phoenix Wright: Ace Attorney — Dual Destinies\nSOJ — Phoenix Wright: Ace Attorney — Spirit of Justice\nRND — случайное аудио, стоит по умолчанию.", from_chat)
