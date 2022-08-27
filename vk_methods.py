@@ -7,11 +7,10 @@ def sender(id, text, from_chat):
         vk_session.method('messages.send', {'user_id': id, 'message': text, 'random_id': 0})
 
 def user_get(id, name_case = 'nom'):
-    user_get = vk_session.method('users.get', {'user_id' : id, 'name_case': name_case, 'fields': 'sex'})
+    user_get = vk_session.method('users.get', {'user_id' : id, 'name_case': name_case, 'fields': 'sex, photo_200'})
     user_get = user_get[0]
     return user_get
 
-def group_name_get(group_id):
-    group_name_get = vk_user_session.method('groups.getById', {'group_ids': group_id*(-1)})
-    group_name_get = group_name_get[0]['name']
-    return group_name_get
+def group_get(group_id):
+    group_get = vk_session.method('groups.getById', {'group_ids': group_id*(-1)})[0]
+    return group_get
