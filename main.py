@@ -4,7 +4,7 @@ from typing import List
 from chat_worker import chat_worker
 from user_worker import user_worker
 from tokens import group_token, user_token, group_id
-from vk_methods import sender, user_get, group_name_get
+from vk_methods import sender
 from api_and_stuff import vk_session, vk_user_session, current_dir, Chat, Video, db, dbx, del_from_dropbox, bot_start_messages
 from render_messages import bot_render
 from multiprocessing import Process, Queue
@@ -46,18 +46,17 @@ def notify(start):
     query = Chat.select().where((Chat.message_received == False) & (Chat.bot_notifications == True))
     if len(query):
         for chat in query:
-            if chat.id == 5:
-                try:
-                    if start:
-                        sender(chat.id, f'Бот запущен! {random.choice(bot_start_messages["start"])}', chat.from_chat)
-                    else:
-                        sender(chat.id, f'Бот отключён. {random.choice(bot_start_messages["end"])}', chat.from_chat)
-                    chat.kicked = False
-                except ApiError:
-                    chat.kicked = True
-                chat.message_received = True    
-                chat.save()
-            time.sleep(1/3)
+            try:
+                if start:
+                    sender(chat.id, f'Бот запущен! {random.choice(bot_start_messages["start"])}', chat.from_chat)
+                else:
+                    sender(chat.id, f'Бот отключён. {random.choice(bot_start_messages["end"])}', chat.from_chat)
+                chat.kicked = False
+            except ApiError:
+                chat.kicked = True
+            chat.message_received = True    
+            chat.save()
+        time.sleep(1/3)
 
 def worker(queue, worker_id):
     while True:
@@ -107,15 +106,15 @@ if __name__=='__main__':
             try:
                 for event in longpoll.listen():
                     if event.type == VkBotEventType.MESSAGE_NEW:
-                        if (event.chat_id==5):
-                            if event.from_chat:
-                                task_queue.put([event.chat_id, event.object.message, True], True, 1/3)
-                            else:
-                                task_queue.put([event.object.message['from_id'], event.object.message, False], True, 1/3)
-                            for i in range(workers_amount):
-                                if workers[i].is_alive()==False:
-                                    workers[i] = Process(target=worker, args=(task_queue, worker_id))
-                                    workers[i].start()
+                        if event.from_chat:
+                            task_queue.put([event.chat_id, event.object.message, True], True, 1/3)
+                        else:
+                            task_queue.put([event.object.message['from_id'], event.object.message, False], True, 1/3)
+                        for i in range(workers_amount):
+                            if workers[i].is_alive()==False:
+                                print(f'Worker No. {i} has stopped working. Restarting...')
+                                workers[i] = Process(target=worker, args=(task_queue, worker_id))
+                                workers[i].start()
             except requests.exceptions.Timeout:
                 if i<longpoll_tries-1:
                     reset_sessions()
