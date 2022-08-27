@@ -7,10 +7,11 @@ import os, shutil
 import requests
 import random
 from tokens import group_token, user_token, group_id
-from vk_methods import sender, user_get, group_name_get
+from vk_methods import sender, user_get, group_get
 from api_and_stuff import upload_to_dropbox, vk_session, vk_user_session, current_dir, db, dbx, upload_to_dropbox, Video, replace_mentions
 from peewee import *
 import time
+from generate_reply import gen_reply
 
 vk_session = vk_api.VkApi(token = group_token)
 vk_user_session = vk_api.VkApi(token = user_token)
@@ -20,14 +21,12 @@ comments = []
 unique_ids = []
 messages_counter = []
 j = 0
-photo_ev_detected = False
 evidence_dir = ''
 not_wall = True
-malicious_detected = False
 
 def render_message(msg, request, video_name):
-    global comments, unique_ids, messages_counter, j, not_wall, photo_ev_detected, evidence_dir, malicious_detected
-    text = msg['text'] if len(msg['text'])<=256 else msg['text'][:256]+'...'
+    global comments, unique_ids, messages_counter, j, not_wall, evidence_dir
+    text = msg['text'] if len(msg['text'])<=700 else msg['text'][:700]+'...'
     if text == '':
         text = ' '
     received_id = msg['from_id']
@@ -47,10 +46,13 @@ def render_message(msg, request, video_name):
         else:
             gender = random.choice(['male', 'female'])
     else:
-        full_name = group_name_get(received_id)
+        full_name = group_get(received_id)['name']
         gender = random.choice(['male', 'female'])
     ev_path = None
-    if 'attachments' in msg.keys():
+    if 'fwd_messages' in msg.keys():
+        j+=1
+        ev_path = gen_reply(msg['fwd_messages'][0], video_name, j)
+    elif 'attachments' in msg.keys():
         pic = msg['attachments']
         if pic!=[]:
             pic = pic[0]
@@ -59,22 +61,20 @@ def render_message(msg, request, video_name):
                 if text != ' ':
                     text+=': '
                 text+=f"♬　{pic['audio']['artist']} — {pic['audio']['title']}　♬"
-            elif pic['type']=='wall' and not_wall==True:
+            if pic['type']=='wall' and not_wall==True:
                 not_wall = False
                 render_message(pic['wall'], request, video_name)
                 not_wall = True
-            elif pic['type']=='audio_message':
+            if pic['type']=='audio_message':
                 text = pic['audio_message']['transcript']
                 if text=='':
                     text='[Голосовое сообщение]'
-            elif pic['type']=='doc':
+            if pic['type']=='doc':
                 if 'preview' in pic['doc'].keys():
-                    if photo_ev_detected == False:
+                    if os.path.exists(f'evidence-{video_name}')==False:
                         os.mkdir(f'evidence-{video_name}')
                         evidence_dir = os.path.join(current_dir, f'evidence-{video_name}')
-                        photo_ev_detected = True
-                    max_size = len(pic['doc']['preview']['photo']['sizes'])-1
-                    pic = pic['doc']['preview']['photo']['sizes'][max_size]['src']
+                    pic = pic['doc']['preview']['photo']['sizes'][-1]['src']
                     r = requests.get(pic)
                     ev_path = os.path.join(evidence_dir, f'{j}.jpg')
                     with open(ev_path, 'wb') as f:
@@ -84,10 +84,9 @@ def render_message(msg, request, video_name):
                         text+=': '
                     text+=f'[Документ "{pic["doc"]["title"]}"'
             elif pic['type'] in ['video', 'photo', 'sticker', 'graffiti']:
-                if photo_ev_detected == False:
+                if os.path.exists(f'evidence-{video_name}')==False:
                     os.mkdir(f'evidence-{video_name}')
                     evidence_dir = os.path.join(current_dir, f'evidence-{video_name}')
-                    photo_ev_detected = True
                 if pic['type']=='video':
                     vid_keys = list(pic['video'].keys())
                     possible_sizes = ['1280', '800', '320', '160', '130']
@@ -99,9 +98,9 @@ def render_message(msg, request, video_name):
                     pic = pic['video'][maxres]
                 elif pic['type']=='photo':
                     pic = pic['photo']['sizes']
-                    pic = pic[len(pic)-1]['url']
+                    pic = pic[-1]['url']
                 elif pic['type']=='sticker':
-                    pic = pic['sticker']['images_with_background'][4]['url']
+                    pic = pic['sticker']['images_with_background'][-1]['url']
                 elif pic['type']=='graffiti':
                     pic = pic['graffiti']['url']
                 r = requests.get(pic)
@@ -112,7 +111,7 @@ def render_message(msg, request, video_name):
     comments.append(Comment(received_id, full_name, text, ev_path, gender=gender))
 
 def bot_render(msg, id, video_name, from_chat):
-    global comments, unique_ids, messages_counter, j, not_wall, photo_ev_detected, evidence_dir, malicious_detected
+    global comments, unique_ids, messages_counter, j, not_wall, evidence_dir
     request = msg['text'].lower()
     sender_id = msg['from_id']
     sender_guy = user_get(sender_id)
@@ -158,7 +157,7 @@ def bot_render(msg, id, video_name, from_chat):
         attorney_name = user_get(attorney, name_case='gen')
         attorney_name = f"{attorney_name['first_name']} {attorney_name['last_name']}"
     else:
-        attorney_name = f"сообщества {group_name_get(attorney)}"
+        attorney_name = f"сообщества {group_get(attorney)['name']}"
     if len(unique_ids)>1:
         prosecutor = unique_ids[messages_counter.index(sorted_counter[1])]
         if attorney == prosecutor:
@@ -168,7 +167,7 @@ def bot_render(msg, id, video_name, from_chat):
             prosecutor_name = user_get(prosecutor, name_case='gen')
             prosecutor_name = f"{prosecutor_name['first_name']} {prosecutor_name['last_name']}"
         else:
-            prosecutor_name = f"сообщества {group_name_get(prosecutor)}"
+            prosecutor_name = f"сообщества {group_get(prosecutor)['name']}"
     dropbox_name = f"Спор {attorney_name} и {prosecutor_name}" if len(unique_ids)>1 else f"Монолог {attorney_name}"
     if len(unique_ids)>1:
         a = vk_user_session.method('video.save', {'name': f"Спор {attorney_name} и {prosecutor_name}", 'description': 'Созданно ботом @aabot_vk.', 'is_private': 1, 'group_id': group_id, 'no_comments': 0, 'compression': 0})
@@ -193,13 +192,11 @@ def bot_render(msg, id, video_name, from_chat):
     else:
         vk_session.method('messages.send', {'user_id': id, 'message': f"Видео готово.{link_text}", 'attachment': video, 'random_id': 0})
     os.remove(f'{video_name}.mp4')
-    if photo_ev_detected:
+    if os.path.exists(f'evidence-{video_name}'):
             shutil.rmtree(f'evidence-{video_name}')
     comments = []
     unique_ids = []
     messages_counter = []
     j = 0
-    photo_ev_detected = False
     evidence_dir = ''
     not_wall = True
-    malicious_detected = False
