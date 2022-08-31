@@ -51,6 +51,7 @@ def upload_to_dropbox(file, name):
     return [dl_url, upload_name]
 
 def del_from_dropbox():
+    db.connect()
     vid_query = Video.select()
     if len(vid_query):
         for vid in vid_query:
@@ -61,6 +62,7 @@ def del_from_dropbox():
                 except Exception:
                     pass
                 vid.delete_instance()
+    db.close()
 
 def replace_mentions(text: str):
     text = text.replace(" ", "space ")
