@@ -51,8 +51,8 @@ def render_message(msg, request, video_name):
     ev_path = None
     if 'fwd_messages' in msg.keys():
         j+=1
-        ev_path = gen_reply(msg['fwd_messages'][0], video_name, j)
-    elif 'attachments' in msg.keys():
+        ev_path = gen_reply(msg, video_name, j)
+    if 'attachments' in msg.keys():
         pic = msg['attachments']
         if pic!=[]:
             pic = pic[0]
@@ -66,11 +66,12 @@ def render_message(msg, request, video_name):
                 render_message(pic['wall'], request, video_name)
                 not_wall = True
             if pic['type']=='audio_message':
-                text = pic['audio_message']['transcript']
-                if text=='':
+                if 'transcript' in pic['audio_message'].keys():
+                    text = pic['audio_message']['transcript']
+                else:
                     text='[Голосовое сообщение]'
             if pic['type']=='doc':
-                if 'preview' in pic['doc'].keys():
+                if 'preview' in pic['doc'].keys() and 'fwd_messages' not in msg.keys():
                     if os.path.exists(f'evidence-{video_name}')==False:
                         os.mkdir(f'evidence-{video_name}')
                         evidence_dir = os.path.join(current_dir, f'evidence-{video_name}')
@@ -83,7 +84,7 @@ def render_message(msg, request, video_name):
                     if text!= ' ':
                         text+=': '
                     text+=f'[Документ "{pic["doc"]["title"]}"'
-            elif pic['type'] in ['video', 'photo', 'sticker', 'graffiti']:
+            elif pic['type'] in ['video', 'photo', 'sticker', 'graffiti'] and 'fwd_messages' not in msg.keys():
                 if os.path.exists(f'evidence-{video_name}')==False:
                     os.mkdir(f'evidence-{video_name}')
                     evidence_dir = os.path.join(current_dir, f'evidence-{video_name}')
