@@ -12,7 +12,7 @@ vk_session = vk_api.VkApi(token = group_token)
 vk_user_session = vk_api.VkApi(token = user_token)
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
-db = MySQLDatabase('chats', user = usr, password = pw, port = pt)
+db = MySQLDatabase('chats', user = usr, password = pw, port = pt, autoconnect=False)
 
 dbx = dbx = dropbox.Dropbox(dropbox_token)
 
@@ -33,7 +33,9 @@ class Video(Model):
     class Meta:
         database = db
 
+db.connect()
 db.create_tables([Chat, Video], safe=True)
+db.close()
 
 def upload_to_dropbox(file, name):
     try:

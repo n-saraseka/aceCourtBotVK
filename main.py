@@ -59,6 +59,7 @@ def notify(start):
         time.sleep(1/3)
 
 def worker(queue, worker_id):
+    db.connect()
     while True:
         task = queue.get()
         id = task[0]
@@ -89,9 +90,9 @@ if __name__=='__main__':
     try:
         open('info.log', 'w').close()
         signal.signal(signal.SIGTERM, term_handler)
-        del_from_dropbox()
-        unreceiver()
-        notify(True)
+        #del_from_dropbox()
+        #unreceiver()
+        #notify(True)
 
         longpoll_tries = 10
         task_queue = Queue()
@@ -106,15 +107,16 @@ if __name__=='__main__':
             try:
                 for event in longpoll.listen():
                     if event.type == VkBotEventType.MESSAGE_NEW:
-                        if event.from_chat:
-                            task_queue.put([event.chat_id, event.object.message, True], True, 1/3)
-                        else:
-                            task_queue.put([event.object.message['from_id'], event.object.message, False], True, 1/3)
-                        for i in range(workers_amount):
-                            if workers[i].is_alive()==False:
-                                print(f'Worker No. {i} has stopped working. Restarting...')
-                                workers[i] = Process(target=worker, args=(task_queue, worker_id))
-                                workers[i].start()
+                        if event.chat_id==5:
+                            if event.from_chat:
+                                task_queue.put([event.chat_id, event.object.message, True], True, 1/3)
+                            else:
+                                task_queue.put([event.object.message['from_id'], event.object.message, False], True, 1/3)
+                            for i in range(workers_amount):
+                                if workers[i].is_alive()==False:
+                                    print(f'Worker No. {i} has stopped working. Restarting...')
+                                    workers[i] = Process(target=worker, args=(task_queue, worker_id))
+                                    workers[i].start()
             except requests.exceptions.Timeout:
                 if i<longpoll_tries-1:
                     reset_sessions()
@@ -124,5 +126,7 @@ if __name__=='__main__':
                     raise
             break
     except KeyboardInterrupt:
+        '''
         del_from_dropbox()
         term_handler()
+        '''
