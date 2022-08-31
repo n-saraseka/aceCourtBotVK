@@ -29,11 +29,13 @@ def term_handler():
 
 
 def unreceiver():
+    db.connect()
     query = Chat.select().where(Chat.message_received == True)
     if len(query):
         for chat in query:
             chat.message_received = False
             chat.save()
+    db.close()
 
 def render_video(msg, id, video_name):
     bot_render(msg, id, video_name)
@@ -43,6 +45,7 @@ def notify(start):
         vk_user_session.method('status.set', {'text': 'Take that! | В настоящий момент запущен', 'group_id': group_id})
     else:
         vk_user_session.method('status.set', {'text': 'Take that! | В настоящий момент отключён', 'group_id': group_id})
+    db.connect()
     query = Chat.select().where((Chat.message_received == False) & (Chat.bot_notifications == True))
     if len(query):
         for chat in query:
@@ -57,6 +60,7 @@ def notify(start):
             chat.message_received = True    
             chat.save()
         time.sleep(1/3)
+    db.close()
 
 def worker(queue, worker_id):
     db.connect()
