@@ -17,27 +17,15 @@ vk_session = vk_api.VkApi(token = group_token)
 vk_user_session = vk_api.VkApi(token = user_token)
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
-comments = []
-unique_ids = []
-messages_counter = []
-j = 0
-evidence_dir = ''
-not_wall = True
-
-def render_message(msg, request, video_name):
-    global comments, unique_ids, messages_counter, j, not_wall, evidence_dir
+def render_message(msg, request, video_name, unique_ids):
     text = msg['text'] if len(msg['text'])<=700 else msg['text'][:700]+'...'
     if text == '':
         text = ' '
     received_id = msg['from_id']
     if unique_ids.count(received_id)==0:
-        unique_ids.append(received_id)
-        messages_counter.append(0)
-        messages_counter[unique_ids.index(received_id)]+=1
+        unique = True
     else:
-        while len(messages_counter)<len(unique_ids):
-            messages_counter.append(0)
-        messages_counter[unique_ids.index(received_id)]+=1
+        unique = False
     if (received_id*(-1))<0:
         fwds_user = user_get(received_id)
         full_name = f"{fwds_user['first_name']} {fwds_user['last_name']}"
@@ -50,21 +38,20 @@ def render_message(msg, request, video_name):
         gender = random.choice(['male', 'female'])
     ev_path = None
     if 'fwd_messages' in msg.keys():
-        j+=1
-        ev_path = gen_reply(msg, video_name, j)
+        if os.path.exists(f'evidence-{video_name}')==False:
+            os.mkdir(f'evidence-{video_name}')
+        evidence_dir = os.path.join(current_dir, f'evidence-{video_name}')
+        ev_path = gen_reply(msg, video_name, len(os.listdir(evidence_dir))+1)
     if 'attachments' in msg.keys():
         pic = msg['attachments']
         if pic!=[]:
             pic = pic[0]
-            j = j + 1
             if pic['type']=='audio':
                 if text != ' ':
                     text+=': '
                 text+=f"♬　{pic['audio']['artist']} — {pic['audio']['title']}　♬"
-            if pic['type']=='wall' and not_wall==True:
-                not_wall = False
+            if pic['type']=='wall':
                 render_message(pic['wall'], request, video_name)
-                not_wall = True
             if pic['type']=='audio_message':
                 if 'transcript' in pic['audio_message'].keys():
                     text = pic['audio_message']['transcript']
@@ -74,10 +61,10 @@ def render_message(msg, request, video_name):
                 if 'preview' in pic['doc'].keys() and 'fwd_messages' not in msg.keys():
                     if os.path.exists(f'evidence-{video_name}')==False:
                         os.mkdir(f'evidence-{video_name}')
-                        evidence_dir = os.path.join(current_dir, f'evidence-{video_name}')
+                    evidence_dir = os.path.join(current_dir, f'evidence-{video_name}')
                     pic = pic['doc']['preview']['photo']['sizes'][-1]['src']
                     r = requests.get(pic)
-                    ev_path = os.path.join(evidence_dir, f'{j}.jpg')
+                    ev_path = os.path.join(evidence_dir, f'{len(os.listdir(evidence_dir)+1)}.jpg')
                     with open(ev_path, 'wb') as f:
                         f.write(r.content)
                 else:
@@ -87,7 +74,7 @@ def render_message(msg, request, video_name):
             elif pic['type'] in ['video', 'photo', 'sticker', 'graffiti'] and 'fwd_messages' not in msg.keys():
                 if os.path.exists(f'evidence-{video_name}')==False:
                     os.mkdir(f'evidence-{video_name}')
-                    evidence_dir = os.path.join(current_dir, f'evidence-{video_name}')
+                evidence_dir = os.path.join(current_dir, f'evidence-{video_name}')
                 if pic['type']=='video':
                     vid_keys = list(pic['video'].keys())
                     possible_sizes = ['1280', '800', '320', '160', '130']
@@ -105,14 +92,16 @@ def render_message(msg, request, video_name):
                 elif pic['type']=='graffiti':
                     pic = pic['graffiti']['url']
                 r = requests.get(pic)
-                ev_path = os.path.join(evidence_dir, f'{j}.jpg')
+                ev_path = os.path.join(evidence_dir, f'{len(os.listdir(evidence_dir))+1}.jpg')
                 with open(ev_path, 'wb') as f:
                     f.write(r.content)
     text = replace_mentions(text)
-    comments.append(Comment(received_id, full_name, text, ev_path, gender=gender))
+    return [received_id, full_name, text, ev_path, gender, unique]
 
 def bot_render(msg, id, video_name, from_chat):
-    global comments, unique_ids, messages_counter, j, not_wall, evidence_dir
+    comments = []
+    unique_ids = []
+    messages_counter = []
     request = msg['text'].lower()
     sender_id = msg['from_id']
     sender_guy = user_get(sender_id)
@@ -139,7 +128,15 @@ def bot_render(msg, id, video_name, from_chat):
         messages = messages['items'][0]['fwd_messages']
     i = 0
     for i in range(len(messages)):
-        render_message(messages[i], request, video_name)
+        message = render_message(messages[i], request, video_name, unique_ids)
+        comments.append(Comment(message[0], message[1], message[2], message[3], gender=message[4]))
+        if message[-1]==True:
+            unique_ids.append(message[0])
+            messages_counter.append(0)
+        else:
+            while len(messages_counter)<len(unique_ids):
+                messages_counter.append(0)
+        messages_counter[unique_ids.index(message[0])]+=1
     music_codes = ['pwr', 'jfa', 't&t', 'aai', 'aai2', 'aj', 'dd', 'soj']
     ost_code = 'RND'
     if '-m' in request:
@@ -198,6 +195,3 @@ def bot_render(msg, id, video_name, from_chat):
     comments = []
     unique_ids = []
     messages_counter = []
-    j = 0
-    evidence_dir = ''
-    not_wall = True

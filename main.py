@@ -18,14 +18,8 @@ from vk_api import ApiError
 longpoll = VkBotLongPoll(vk_session, group_id)
 logging.basicConfig(filename='info.log', format='%(asctime)s - %(message)s', level=logging.INFO)
 
-def reset_sessions():
-    global vk_session, vk_user_session
-    vk_session = vk_api.VkApi(token = group_token)
-    vk_user_session = vk_api.VkApi(token = user_token)
-
 def term_handler():
     unreceiver()
-    notify(False)
 
 
 def unreceiver():
@@ -39,28 +33,6 @@ def unreceiver():
 
 def render_video(msg, id, video_name):
     bot_render(msg, id, video_name)
-
-def notify(start):
-    if start:
-        vk_user_session.method('status.set', {'text': 'Take that! | В настоящий момент запущен', 'group_id': group_id})
-    else:
-        vk_user_session.method('status.set', {'text': 'Take that! | В настоящий момент отключён', 'group_id': group_id})
-    db.connect()
-    query = Chat.select().where((Chat.message_received == False) & (Chat.bot_notifications == True))
-    if len(query):
-        for chat in query:
-            try:
-                if start:
-                    sender(chat.id, f'Бот запущен! {random.choice(bot_start_messages["start"])}', chat.from_chat)
-                else:
-                    sender(chat.id, f'Бот отключён. {random.choice(bot_start_messages["end"])}', chat.from_chat)
-                chat.kicked = False
-            except ApiError:
-                chat.kicked = True
-            chat.message_received = True    
-            chat.save()
-        time.sleep(1/3)
-    db.close()
 
 def worker(queue, worker_id):
     db.connect()
@@ -96,7 +68,6 @@ if __name__=='__main__':
         signal.signal(signal.SIGTERM, term_handler)
         del_from_dropbox()
         unreceiver()
-        notify(True)
 
         longpoll_tries = 10
         task_queue = Queue()
@@ -111,18 +82,20 @@ if __name__=='__main__':
             try:
                 for event in longpoll.listen():
                     if event.type == VkBotEventType.MESSAGE_NEW:
-                        if event.from_chat:
-                            task_queue.put([event.chat_id, event.object.message, True], True, 1/3)
-                        else:
-                            task_queue.put([event.object.message['from_id'], event.object.message, False], True, 1/3)
-                        for i in range(workers_amount):
-                            if workers[i].is_alive()==False:
-                                print(f'Worker No. {i} has stopped working. Restarting...')
-                                workers[i] = Process(target=worker, args=(task_queue, worker_id))
-                                workers[i].start()
+                        if (event.chat_id == 2):
+                            if event.from_chat:
+                                task_queue.put([event.chat_id, event.object.message, True], True, 1/3)
+                            else:
+                                task_queue.put([event.object.message['from_id'], event.object.message, False], True, 1/3)
+                            for i in range(workers_amount):
+                                if workers[i].is_alive()==False:
+                                    print(f'Worker No. {i} has stopped working. Restarting...')
+                                    workers[i] = Process(target=worker, args=(task_queue, worker_id))
+                                    workers[i].start()
             except requests.exceptions.Timeout:
                 if i<longpoll_tries-1:
-                    reset_sessions()
+                    vk_session = vk_api.VkApi(token = group_token)
+                    vk_user_session = vk_api.VkApi(token = user_token)
                     longpoll = VkBotLongPoll(vk_session, group_id)
                     continue
                 else:
