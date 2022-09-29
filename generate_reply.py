@@ -22,12 +22,9 @@ def gen_reply(msg, video_name, counter):
                     if os.path.exists(f'evidence-{video_name}')==False:
                         os.mkdir(f'evidence-{video_name}')
                     evidence_dir = os.path.join(current_dir, f'evidence-{video_name}')
-                    with open(os.path.join(evidence_dir, 'embed.jpg'), 'wb') as f:
+                    with open(os.path.join(evidence_dir, 'embed-1.jpg'), 'wb') as f:
                         f.write(r.content)
-                else:
-                    if text!= ' ':
-                        text+=': '
-                    text+=f'[Документ "{pic["doc"]["title"]}"'
+                    embed_original = Image.open(os.path.join(evidence_dir, 'embed-1.jpg'))
             elif pic['type'] in ['video', 'photo', 'sticker', 'graffiti']:
                 if pic['type']=='video':
                     vid_keys = list(pic['video'].keys())
