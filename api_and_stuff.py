@@ -6,8 +6,6 @@ import dropbox
 import time
 from dropbox.exceptions import ApiError as dropbox_error
 
-bot_start_messages = {'start': ["Наслаждайтесь судебными прениями.", "Судья хорошо поспал и готов вести ваши заседания.", "Самое время решать судьбы своих друзей по переписке."], 'end': ['Судье пора спать.', 'Судья устал.', 'У судьи обеденный перерыв.']}
-
 vk_session = vk_api.VkApi(token = group_token)
 vk_user_session = vk_api.VkApi(token = user_token)
 current_dir = os.path.dirname(os.path.abspath(__file__))
