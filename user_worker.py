@@ -2,10 +2,20 @@ from api_and_stuff import vk_session, vk_user_session, current_dir, Chat
 from vk_api import ApiError
 from vk_methods import sender
 from render_messages import bot_render
-import shutil
 import os
 import base64
 import logging
+import shutil
+
+def remove_video_content(name):
+    if os.path.exists(f'{name}.mp4'):
+        os.remove(f'{name}.mp4')
+    if os.path.exists(f'{name}.mp4.audio.mp3'):
+        os.remove(f'{name}.mp4.audio.mp3')
+    if os.path.exists(f'{name}.mp4.txt'):
+        os.remove(f'{name}.mp4.txt')
+    if os.path.exists(name):
+        shutil.rmtree(name)
 
 def user_worker(id, msg, from_chat):
     if 'суд' in msg['text'].lower().split() or ('сус' in msg['text'].lower().split() and 'суд' not in msg['text'].lower().split()):
@@ -30,7 +40,13 @@ def user_worker(id, msg, from_chat):
             name = base64.b64encode(os.urandom(16)).decode('ascii').replace('/', '').replace('=', '').replace('+', '')
             try:
                 bot_render(msg, id, name, from_chat)
+            except ApiError:
+                    chat = Chat.get_or_none(Chat.id == id)
+                    chat.kicked == True
+                    chat.save()
+                    remove_video_content(name)
             except Exception as e:
+                    remove_video_content(name)
                     sender(id, f'Бот не смог обработать видео! Текст сообщения:\n{e}\nПерешлите данное сообщение в сообщения группы или создателю бота, чтобы он смог решить проблему.', from_chat)
         else:
             sender(id, f'Похоже, что Вы написали "суд" без пересланного сообщения. Перешлите что-нибудь вместе с командой "суд" и попробуйте ещё раз.', from_chat)
@@ -38,36 +54,5 @@ def user_worker(id, msg, from_chat):
         if '-m' in msg['text'].lower().split():
             sender(id, "PWR — Phoenix Wright: Ace Attorney\nJFA — Phoenix Wright: Ace Attorney — Justice For All\nT&T — Phoenix Wright: Ace Attorney — Trials and Tribulations\nAAI — Ace Attorney Investigations: Miles Edgeworth\nAAI2 — Ace Attorney Investigations: Miles Edgeworth 2\nAJ — Apollo Justice: Ace Attorney\nDD — Phoenix Wright: Ace Attorney — Dual Destinies\nSOJ — Phoenix Wright: Ace Attorney — Spirit of Justice\nRND — случайное аудио, стоит по умолчанию.", from_chat)
         else:
-            sender(id, "Видео:\nсуд — создание видео.\n-ig — выбор персонажей с игнорированием пола пользователей.\n-m — выбор OST'а по коду. Коды для данной команды вы можете получить по команде '@acecourtbotvk помощь -m'.\nОповещения:\nотключить оповещения - отписаться от оповещений о включении и отключении бота.\nвключить оповещения - подписаться на оповещения о включении и отключении бота.", from_chat)
+            sender(id, "Видео:\nсуд — создание видео.\n-ig — выбор персонажей с игнорированием пола пользователей.\n-m — выбор OST'а по коду. Коды для данной команды вы можете получить по команде '@acecourtbotvk помощь -m'.", from_chat)
             logging.info(f'"Help" command executed. CHAT_ID: {id}')
-    elif 'отключить оповещения' in msg['text'].lower():
-        chat = Chat.get_or_none(Chat.id == id)
-        if chat!=None:
-            try:
-                if chat.bot_notifications == True:
-                    chat = Chat.get(Chat.id == id)
-                    chat.bot_notifications = False
-                    chat.save() 
-                    sender(id, 'Теперь вы отписаны от оповещений о включении и отключении бота. Судья будет скучать!', from_chat)
-                else:
-                    sender(id, 'Вы уже отписаны от оповещений о включении бота. Не делайте глупостей в суде!', from_chat)
-            except ApiError:
-                    chat = Chat.get_or_none(Chat.id == id)
-                    chat.kicked == True
-                    chat.save()
-    elif 'включить оповещения' in msg['text'].lower():
-        chat = Chat.get_or_none(Chat.id == id)
-        if chat==None:
-            chat = Chat.create(id = id, message_received = True, bot_notifications = False, kicked=False, from_chat = False)
-            chat.save()
-        try:
-            if chat.bot_notifications == False:
-                chat.bot_notifications = True
-                chat.save()
-                sender(id, 'Теперь вы подписаны на оповещения о включении и отключении бота.', from_chat)
-            else:
-                sender(id, 'Вы уже подписаны на оповещения о включении бота. Не делайте глупостей в суде!', from_chat)
-        except ApiError:
-                chat = Chat.get_or_none(Chat.id == id)
-                chat.kicked == True
-                chat.save()
