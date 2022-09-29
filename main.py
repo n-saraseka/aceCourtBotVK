@@ -5,7 +5,7 @@ from chat_worker import chat_worker
 from user_worker import user_worker
 from tokens import group_token, user_token, group_id
 from vk_methods import sender
-from api_and_stuff import vk_session, vk_user_session, current_dir, Chat, Video, db, dbx, del_from_dropbox, bot_start_messages
+from api_and_stuff import vk_session, vk_user_session, current_dir, Chat, Video, db, dbx, del_from_dropbox
 from render_messages import bot_render
 from multiprocessing import Process, Queue
 import logging
