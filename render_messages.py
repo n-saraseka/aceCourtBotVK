@@ -51,7 +51,7 @@ def render_message(msg, request, video_name, unique_ids):
                     text+=': '
                 text+=f"♬　{pic['audio']['artist']} — {pic['audio']['title']}　♬"
             if pic['type']=='wall':
-                render_message(pic['wall'], request, video_name)
+                render_message(pic['wall'], request, video_name, unique_ids)
             if pic['type']=='audio_message':
                 if 'transcript' in pic['audio_message'].keys():
                     text = pic['audio_message']['transcript']
