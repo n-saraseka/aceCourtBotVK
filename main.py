@@ -51,7 +51,6 @@ def worker(queue, worker_id):
 if __name__=='__main__':
     try:
         open('info.log', 'w').close()
-        signal.signal(signal.SIGTERM, term_handler)
         del_from_dropbox()
 
         task_queue = Queue()
@@ -81,4 +80,3 @@ if __name__=='__main__':
                 longpoll = VkBotLongPoll(vk_session, group_id)
     except KeyboardInterrupt:
         del_from_dropbox()
-        term_handler()
