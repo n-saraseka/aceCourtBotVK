@@ -17,19 +17,6 @@ from vk_api import ApiError
 longpoll = VkBotLongPoll(vk_session, group_id)
 logging.basicConfig(filename='info.log', format='%(asctime)s - %(message)s', level=logging.INFO)
 
-def term_handler():
-    unreceiver()
-
-
-def unreceiver():
-    db.connect()
-    query = Chat.select().where(Chat.message_received == True)
-    if len(query):
-        for chat in query:
-            chat.message_received = False
-            chat.save()
-    db.close()
-
 def render_video(msg, id, video_name):
     bot_render(msg, id, video_name)
 
@@ -66,7 +53,6 @@ if __name__=='__main__':
         open('info.log', 'w').close()
         signal.signal(signal.SIGTERM, term_handler)
         del_from_dropbox()
-        unreceiver()
 
         task_queue = Queue()
         workers = []
@@ -89,7 +75,7 @@ if __name__=='__main__':
                             workers[i] = Process(target=worker, args=(task_queue, worker_id))
                             workers[i].start()
                 time.sleep(1/3)
-            except requests.exceptions.ConnectionError:
+            except Exception:
                 vk_session = vk_api.VkApi(token = group_token)
                 vk_user_session = vk_api.VkApi(token = user_token)
                 longpoll = VkBotLongPoll(vk_session, group_id)
