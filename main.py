@@ -61,22 +61,22 @@ if __name__=='__main__':
             workers.append(Process(target=worker, args=(task_queue, worker_id)))
             workers[i].start()
             print(f'Worker No. {i} has started working')
-        for event in longpoll.listen():
-            try:
-                if event.type == VkBotEventType.MESSAGE_NEW:
-                    if event.from_chat:
-                        task_queue.put([event.chat_id, event.object.message, True], True, 1/3)
-                    else:
-                        task_queue.put([event.object.message['from_id'], event.object.message, False], True, 1/3)
-                    for i in range(workers_amount):
-                        if workers[i].is_alive()==False:
-                            print(f'Worker No. {i} has stopped working. Restarting...')
-                            workers[i] = Process(target=worker, args=(task_queue, worker_id))
-                            workers[i].start()
-                time.sleep(1/3)
-            except Exception:
-                vk_session = vk_api.VkApi(token = group_token)
-                vk_user_session = vk_api.VkApi(token = user_token)
-                longpoll = VkBotLongPoll(vk_session, group_id)
+        try:
+            for event in longpoll.listen():
+                    if event.type == VkBotEventType.MESSAGE_NEW:
+                        if event.from_chat:
+                            task_queue.put([event.chat_id, event.object.message, True], True, 1/3)
+                        else:
+                            task_queue.put([event.object.message['from_id'], event.object.message, False], True, 1/3)
+                        for i in range(workers_amount):
+                            if workers[i].is_alive()==False:
+                                print(f'Worker No. {i} has stopped working. Restarting...')
+                                workers[i] = Process(target=worker, args=(task_queue, worker_id))
+                                workers[i].start()
+                    time.sleep(1/3)
+        except Exception:
+            vk_session = vk_api.VkApi(token = group_token)
+            vk_user_session = vk_api.VkApi(token = user_token)
+            longpoll = VkBotLongPoll(vk_session, group_id)
     except KeyboardInterrupt:
         del_from_dropbox()
