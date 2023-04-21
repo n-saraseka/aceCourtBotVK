@@ -14,7 +14,17 @@ import time
 import requests
 from vk_api import ApiError
 
-longpoll = VkBotLongPoll(vk_session, group_id)
+class AABotLongPoll(VkBotLongPoll):
+    def listen(self)
+        while True:
+            try:
+                for event in self.check();
+                    yield event
+                except Exception as e:
+                    print(f'Longpoll failed with exception {e}')
+
+
+longpoll = AABotLongPoll(vk_session, group_id)
 logging.basicConfig(filename='info.log', format='%(asctime)s - %(message)s', level=logging.INFO)
 
 def render_video(msg, id, video_name):
@@ -65,23 +75,16 @@ if __name__=='__main__':
             workers[i].start()
             print(f'Worker No. {i} has started working')
         for event in longpoll.listen():
-            try:
-                if event.type == VkBotEventType.MESSAGE_NEW:
-                    if event.from_chat:
-                        task_queue.put([event.chat_id, event.object.message, True], True, 1/3)
-                    else:
-                        task_queue.put([event.object.message['from_id'], event.object.message, False], True, 1/3)
-                    for i in range(workers_amount):
-                        if workers[i].is_alive()==False:
-                            print(f'Worker No. {i} has stopped working. Restarting...')
-                            workers[i] = Process(target=worker, args=(task_queue, worker_id))
-                            workers[i].start()
-                time.sleep(1/3)
-            except Exception as ex:
-                print(f'Longpoll failed with exception {ex}')
-                logging.info(f'Longpoll failed with exception {ex}')
-                vk_session = vk_api.VkApi(token = group_token)
-                vk_user_session = vk_api.VkApi(token = user_token)
-                longpoll = VkBotLongPoll(vk_session, group_id)
+            if event.type == VkBotEventType.MESSAGE_NEW:
+                if event.from_chat:
+                    task_queue.put([event.chat_id, event.object.message, True], True, 1/3)
+                else:
+                    task_queue.put([event.object.message['from_id'], event.object.message, False], True, 1/3)
+                for i in range(workers_amount):
+                    if workers[i].is_alive()==False:
+                        print(f'Worker No. {i} has stopped working. Restarting...')
+                        workers[i] = Process(target=worker, args=(task_queue, worker_id))
+                        workers[i].start()
+            time.sleep(1/3)
     except KeyboardInterrupt:
         del_from_dropbox()
