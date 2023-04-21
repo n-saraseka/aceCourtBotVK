@@ -20,8 +20,8 @@ class AABotLongPoll(VkBotLongPoll):
             try:
                 for event in self.check():
                     yield event
-                except Exception as e:
-                    print(f'Longpoll failed with exception {e}')
+            except Exception as e:
+                print(f'Longpoll failed with exception {e}')
 
 
 longpoll = AABotLongPoll(vk_session, group_id)
