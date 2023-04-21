@@ -77,9 +77,9 @@ if __name__=='__main__':
                             workers[i] = Process(target=worker, args=(task_queue, worker_id))
                             workers[i].start()
                 time.sleep(1/3)
-            except Exception as e:
-                print(f'Longpoll failed with exception {e}')
-                logging.info(f'Longpoll failed with exception {e}')
+            except Exception as ex:
+                print(f'Longpoll failed with exception {ex}')
+                logging.info(f'Longpoll failed with exception {ex}')
                 vk_session = vk_api.VkApi(token = group_token)
                 vk_user_session = vk_api.VkApi(token = user_token)
                 longpoll = VkBotLongPoll(vk_session, group_id)
