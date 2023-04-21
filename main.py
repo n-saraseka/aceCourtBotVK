@@ -15,7 +15,7 @@ import requests
 from vk_api import ApiError
 
 class AABotLongPoll(VkBotLongPoll):
-    def listen(self)
+    def listen(self):
         while True:
             try:
                 for event in self.check();
