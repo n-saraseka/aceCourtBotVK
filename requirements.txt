@@ -1,0 +1,4 @@
+vk_api
+peewee
+requests
+dropbox
