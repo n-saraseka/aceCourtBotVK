@@ -18,7 +18,7 @@ class AABotLongPoll(VkBotLongPoll):
     def listen(self):
         while True:
             try:
-                for event in self.check();
+                for event in self.check():
                     yield event
                 except Exception as e:
                     print(f'Longpoll failed with exception {e}')
