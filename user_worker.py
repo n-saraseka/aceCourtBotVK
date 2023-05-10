@@ -1,6 +1,6 @@
-from api_and_stuff import vk_session, vk_user_session, current_dir, Chat
+from api_and_stuff import vk_session, vk_user_session, current_dir, Chat, Character, db
 from vk_api import ApiError
-from vk_methods import sender
+from vk_methods import sender, user_get
 from render_messages import bot_render
 import os
 import base64
@@ -18,6 +18,9 @@ def remove_video_content(name):
         shutil.rmtree(name)
 
 def user_worker(id, msg, from_chat):
+    sender_id = msg['from_id']
+    sender_guy = user_get(sender_id)
+    sender_name = sender_guy['first_name']
     if 'суд' in msg['text'].lower().split() or ('сус' in msg['text'].lower().split() and 'суд' not in msg['text'].lower().split()):
         messages = vk_session.method('messages.getByConversationMessageId', {'peer_id': msg['peer_id'], 'conversation_message_ids': msg['conversation_message_id'], 'extended': 1})
         if 'reply_message' in messages['items'][0].keys():
@@ -53,6 +56,15 @@ def user_worker(id, msg, from_chat):
     elif 'помощь' in msg['text'].lower().split():
         if '-m' in msg['text'].lower().split():
             sender(id, "PWR — Phoenix Wright: Ace Attorney\nJFA — Phoenix Wright: Ace Attorney — Justice For All\nT&T — Phoenix Wright: Ace Attorney — Trials and Tribulations\nAAI — Ace Attorney Investigations: Miles Edgeworth\nAAI2 — Ace Attorney Investigations: Miles Edgeworth 2\nAJ — Apollo Justice: Ace Attorney\nDD — Phoenix Wright: Ace Attorney — Dual Destinies\nSOJ — Phoenix Wright: Ace Attorney — Spirit of Justice\nRND — случайное аудио, стоит по умолчанию.", from_chat)
+        elif "перс" in msg['text'].lower().split():
+            sender(id, "Список персонажей можно посмотреть по ссылке: https://vk.cc/co0W07", from_chat)
         else:
-            sender(id, "Видео:\nсуд — создание видео.\n-ig — выбор персонажей с игнорированием пола пользователей.\n-m — выбор OST'а по коду. Коды для данной команды вы можете получить по команде '@acecourtbotvk помощь -m'.", from_chat)
-            logging.info(f'"Help" command executed. CHAT_ID: {id}')
+            sender(id, "Видео:\nсуд — создание видео.\n-ig — выбор персонажей с игнорированием пола пользователей.\n-m — выбор OST'а по коду. Коды для данной команды Вы можете получить по команде 'помощь -m'\nПрочие команды:\nперс - выбор собственного персонажа. Список персонажей Вы можете получить по команде 'помощь перс'.", from_chat)
+    elif 'перс' in msg['text'].lower().split():
+        char = Character.get_or_none(id = sender_id)
+        if (char == None):
+            char = Character.create(id = sender_id, char_name = msg['text'].split()[2].upper())
+        else:
+            char.char_name = msg['text'].split()[2].upper()
+            char.save()
+        sender(id, f'Теперь Ваш персонаж - {msg["text"].split()[2].upper()}', from_chat)

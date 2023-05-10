@@ -8,7 +8,7 @@ import requests
 import random
 from tokens import group_token, user_token, group_id
 from vk_methods import sender, user_get, group_get
-from api_and_stuff import upload_to_dropbox, vk_session, vk_user_session, current_dir, db, dbx, upload_to_dropbox, Video, replace_mentions
+from api_and_stuff import upload_to_dropbox, vk_session, vk_user_session, current_dir, db, dbx, upload_to_dropbox, Video, Character, replace_mentions
 from peewee import *
 import time
 from generate_reply import gen_reply
@@ -26,7 +26,11 @@ def render_message(msg, request, video_name, unique_ids):
         unique = True
     else:
         unique = False
+    character = None
     if (received_id*(-1))<0:
+        character = Character.get_or_none(id = received_id)
+        if (character != None):
+            character = character.char_name
         fwds_user = user_get(received_id)
         full_name = f"{fwds_user['first_name']} {fwds_user['last_name']}"
         if '-ig' not in request:
@@ -96,7 +100,7 @@ def render_message(msg, request, video_name, unique_ids):
                 with open(ev_path, 'wb') as f:
                     f.write(r.content)
     text = replace_mentions(text)
-    return [received_id, full_name, text, ev_path, gender, unique]
+    return [received_id, full_name, text, ev_path, gender, character, unique]
 
 def bot_render(msg, id, video_name, from_chat):
     comments = []
@@ -129,7 +133,7 @@ def bot_render(msg, id, video_name, from_chat):
     i = 0
     for i in range(len(messages)):
         message = render_message(messages[i], request, video_name, unique_ids)
-        comments.append(Comment(message[0], message[1], message[2], message[3], gender=message[4]))
+        comments.append(Comment(message[0], message[1], message[2], message[3], gender=message[4], character=message[5]))
         if message[-1]==True:
             unique_ids.append(message[0])
             messages_counter.append(0)
@@ -194,4 +198,3 @@ def bot_render(msg, id, video_name, from_chat):
             shutil.rmtree(f'evidence-{video_name}')
     comments = []
     unique_ids = []
-    messages_counter = []

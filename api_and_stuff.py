@@ -31,8 +31,15 @@ class Video(Model):
     class Meta:
         database = db
 
+class Character(Model):
+    id = IntegerField(primary_key=True)
+    char_name = CharField()
+
+    class Meta:
+        database = db
+
 db.connect()
-db.create_tables([Chat, Video], safe=True)
+db.create_tables([Chat, Video, Character], safe=True)
 db.close()
 
 def upload_to_dropbox(file, name):
