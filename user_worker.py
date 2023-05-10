@@ -57,14 +57,20 @@ def user_worker(id, msg, from_chat):
         if '-m' in msg['text'].lower().split():
             sender(id, "PWR — Phoenix Wright: Ace Attorney\nJFA — Phoenix Wright: Ace Attorney — Justice For All\nT&T — Phoenix Wright: Ace Attorney — Trials and Tribulations\nAAI — Ace Attorney Investigations: Miles Edgeworth\nAAI2 — Ace Attorney Investigations: Miles Edgeworth 2\nAJ — Apollo Justice: Ace Attorney\nDD — Phoenix Wright: Ace Attorney — Dual Destinies\nSOJ — Phoenix Wright: Ace Attorney — Spirit of Justice\nRND — случайное аудио, стоит по умолчанию.", from_chat)
         elif "перс" in msg['text'].lower().split():
-            sender(id, "Список персонажей можно посмотреть по ссылке: https://vk.cc/co0W07", from_chat)
+            sender(id, "Список персонажей можно посмотреть по ссылке: https://vk.cc/co1iQx", from_chat)
         else:
-            sender(id, "Видео:\nсуд — создание видео.\n-ig — выбор персонажей с игнорированием пола пользователей.\n-m — выбор OST'а по коду. Коды для данной команды Вы можете получить по команде 'помощь -m'\nПрочие команды:\nперс - выбор собственного персонажа. Список персонажей Вы можете получить по команде 'помощь перс'.", from_chat)
+            sender(id, "Видео:\nсуд — создание видео.\n-ig — выбор персонажей с игнорированием пола пользователей.\n-m — выбор OST'а по коду. Коды для данной команды Вы можете получить по команде 'помощь -m'\nПрочие команды:\nперс - выбор собственного персонажа. Список персонажей Вы можете получить по команде 'помощь перс'.\nперс сброс - сброс персонажа.", from_chat)
     elif 'перс' in msg['text'].lower().split():
-        char = Character.get_or_none(id = sender_id)
-        if (char == None):
-            char = Character.create(id = sender_id, char_name = msg['text'].split()[2].upper())
+        if 'сброс' in msg['text'].lower().split():
+            char = Character.get_or_none(id = sender_id)
+            if (char != None):
+                char.char_name = ''
+            sender(id, 'Персонаж сброшен. Теперь в судах у вас будет случайный персонаж.', from_chat)
         else:
-            char.char_name = msg['text'].split()[2].upper()
-            char.save()
-        sender(id, f'Теперь Ваш персонаж - {msg["text"].split()[2].upper()}', from_chat)
+            char = Character.get_or_none(id = sender_id)
+            if (char == None):
+                char = Character.create(id = sender_id, char_name = msg['text'].split()[2].upper())
+            else:
+                char.char_name = msg['text'].split()[2].upper()
+                char.save()
+            sender(id, f'Теперь Ваш персонаж - {msg["text"].split()[2].upper()}', from_chat)
