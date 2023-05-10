@@ -65,12 +65,13 @@ def user_worker(id, msg, from_chat):
             char = Character.get_or_none(id = sender_id)
             if (char != None):
                 char.char_name = ''
+                char.save()
             sender(id, 'Персонаж сброшен. Теперь в судах у вас будет случайный персонаж.', from_chat)
         else:
             char = Character.get_or_none(id = sender_id)
             if (char == None):
-                char = Character.create(id = sender_id, char_name = msg['text'].split()[2].upper())
+                char = Character.create(id = sender_id, char_name = msg['text'].split()[1].upper().encode('latin-1', 'ignore'))
             else:
-                char.char_name = msg['text'].split()[2].upper()
+                char.char_name = msg['text'].split()[1].upper()
                 char.save()
             sender(id, f'Теперь Ваш персонаж - {msg["text"].split()[2].upper()}', from_chat)

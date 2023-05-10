@@ -81,11 +81,12 @@ def chat_worker(id, msg, from_chat):
                 char = Character.get_or_none(id = sender_id)
                 if (char != None):
                     char.char_name = ''
+                    char.save()
                 sender(id, f'[id{sender_id}|{sender_name}], персонаж сброшен. Теперь в судах у вас будет случайный персонаж.', from_chat)
             else:
                 char = Character.get_or_none(id = sender_id)
                 if (char == None):
-                    char = Character.create(id = sender_id, char_name = msg['text'].split()[2].upper())
+                    char = Character.create(id = sender_id, char_name = msg['text'].split()[2].upper().encode('latin-1', 'ignore'))
                 else:
                     char.char_name = msg['text'].split()[2].upper()
                     char.save()
