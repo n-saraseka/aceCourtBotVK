@@ -2,6 +2,7 @@ from api_and_stuff import vk_session, vk_user_session, current_dir, Chat, Charac
 from vk_api import ApiError
 from vk_methods import sender, user_get
 from render_messages import bot_render
+from objection_engine.constants import character_roles_and_gender
 import os
 import base64
 import logging
@@ -19,8 +20,6 @@ def remove_video_content(name):
 
 def user_worker(id, msg, from_chat):
     sender_id = msg['from_id']
-    sender_guy = user_get(sender_id)
-    sender_name = sender_guy['first_name']
     if 'суд' in msg['text'].lower().split() or ('сус' in msg['text'].lower().split() and 'суд' not in msg['text'].lower().split()):
         messages = vk_session.method('messages.getByConversationMessageId', {'peer_id': msg['peer_id'], 'conversation_message_ids': msg['conversation_message_id'], 'extended': 1})
         if 'reply_message' in messages['items'][0].keys():
@@ -66,12 +65,16 @@ def user_worker(id, msg, from_chat):
             if (char != None):
                 char.char_name = ''
                 char.save()
-            sender(id, 'Персонаж сброшен. Теперь в судах у вас будет случайный персонаж.', from_chat)
+            sender(id, 'Персонаж сброшен. Теперь в судах у Вас будет случайный персонаж.', from_chat)
         else:
-            char = Character.get_or_none(id = sender_id)
-            if (char == None):
-                char = Character.create(id = sender_id, char_name = msg['text'].split()[1].upper().encode('latin-1', 'ignore'))
+            character_name = msg['text'].split()[1].upper()
+            if (character_name not in character_roles_and_gender):
+                sender(id, "Некорректный код персонажа. Проверьте сообщение на ошибки и попробуйте ещё раз.", from_chat)
             else:
-                char.char_name = msg['text'].split()[1].upper()
-                char.save()
-            sender(id, f'Теперь Ваш персонаж - {msg["text"].split()[2].upper()}', from_chat)
+                char = Character.get_or_none(id = sender_id)
+                if (char == None):
+                    char = Character.create(id = sender_id, char_name = character_name)
+                else:
+                    char.char_name = character_name
+                    char.save()
+                sender(id, f'Теперь Ваш персонаж - {character_name}', from_chat)
